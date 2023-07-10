@@ -36,7 +36,7 @@ var count = 0;
       // console.log("cell class: ", cellClass);
 
       if(cellClass.includes('piece')) {
-		  cellClasses = cellClass.split(" ");
+		  const cellClasses = cellClass.split(" ");
 		  if(cellClasses[1].includes('square')) {
 			  console.log("point: ", cellClasses[1]);
 			  console.log("Location: ", cellClasses[2]);
