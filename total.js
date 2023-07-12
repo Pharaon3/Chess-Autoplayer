@@ -128,7 +128,6 @@ let oldChPos = [
     }
   }
   console.log("newShPos: ", newShPos);
-
   const boards2 = await page2.$('#board-vs-personalities');
   const cells2 = await boards2.$$('div');
   let newChPos = [];
@@ -177,6 +176,7 @@ let oldChPos = [
   let EcL = "";
   console.log("SsL: ", SsL);
   console.log("EsL: ", EsL);
+  oldShPos = newShPos;
   await new Promise((resolve) => rl.once('line', resolve));
   isAvailable = true;
   setInterval(async () => {
@@ -211,6 +211,7 @@ let oldChPos = [
 		await page2.mouse.down();
 		await page2.mouse.move(targetX2, targetY2);
 		await page2.mouse.up();
+    console.log("Mouse released!")
     ScL = ""
     ScE = ""
     let newChPos = [];
@@ -243,7 +244,6 @@ let oldChPos = [
         }
         if (!flag && oldChPos[i]["point"][0] == "b") {
           ScL = oldChPos[i];
-          ScLflag = false;
         }
       }
       for (let i = 0; i < newChPos.length; i++){
@@ -255,6 +255,7 @@ let oldChPos = [
           EcL = newChPos[i];
         }
       }
+      if(ScL && EcL) ScLflag = false;
     }
     console.log("newChPos: ", newChPos);
     console.log("ScL", ScL);
@@ -293,9 +294,10 @@ let oldChPos = [
     await page1.mouse.move(targetX1, targetY1);
     await page1.mouse.up();
     SsL = "";
-    SsE = "";
+    EsL = "";
     let newShPos = [];
     let SsLFlag = true;
+    console.log("oldShPos: ", oldShPos);
     while(SsLFlag){
       newShPos = [];
       await page1.waitForTimeout(100);
@@ -324,7 +326,7 @@ let oldChPos = [
         }
         if (!flag && oldShPos[i]["point"][0] == "w") {
           SsL = oldShPos[i];
-          SsLFlag = false;
+          // SsLFlag = false;
         }
       }
       for (let i = 0; i < newShPos.length; i++){
@@ -336,11 +338,14 @@ let oldChPos = [
           EsL = newShPos[i];
         }
       }
+      if(SsL && EsL) SsLFlag = false;
     }
     console.log("SsL", SsL);
     console.log("EsL", EsL); 
     oldShPos = newShPos;
+    console.log("oldShPos: ", oldShPos);
     console.log("newShPos: ", newShPos);  
+    await page1.waitForTimeout(100);
     isAvailable = true;
   }, interval);
   
