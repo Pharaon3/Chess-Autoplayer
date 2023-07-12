@@ -1,10 +1,83 @@
 const puppeteer = require('puppeteer');
 const axios = require('axios');
 const fs = require('fs');
+const readline = require('readline');
 
-const interval = 5000;
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
+const interval = 10000;
 var count = 0;
-
+let oldShPos =[
+  { position: '11', point: 'wr' },
+  { position: '21', point: 'wn' },
+  { position: '31', point: 'wb' },
+  { position: '41', point: 'wq' },
+  { position: '51', point: 'wk' },
+  { position: '61', point: 'wb' },
+  { position: '71', point: 'wn' },
+  { position: '81', point: 'wr' },
+  { position: '12', point: 'wp' },
+  { position: '22', point: 'wp' },
+  { position: '32', point: 'wp' },
+  { position: '42', point: 'wp' },
+  { position: '52', point: 'wp' },
+  { position: '62', point: 'wp' },
+  { position: '72', point: 'wp' },
+  { position: '82', point: 'wp' },
+  { position: '17', point: 'bp' },
+  { position: '27', point: 'bp' },
+  { position: '37', point: 'bp' },
+  { position: '47', point: 'bp' },
+  { position: '57', point: 'bp' },
+  { position: '67', point: 'bp' },
+  { position: '77', point: 'bp' },
+  { position: '87', point: 'bp' },
+  { position: '18', point: 'br' },
+  { position: '28', point: 'bn' },
+  { position: '38', point: 'bb' },
+  { position: '48', point: 'bq' },
+  { position: '58', point: 'bk' },
+  { position: '68', point: 'bb' },
+  { position: '78', point: 'bn' },
+  { position: '88', point: 'br' }
+];
+let oldChPos = [
+  { position: '88', point: 'br' },
+  { position: '78', point: 'bn' },
+  { position: '68', point: 'bb' },
+  { position: '58', point: 'bk' },
+  { position: '48', point: 'bq' },
+  { position: '38', point: 'bb' },
+  { position: '28', point: 'bn' },
+  { position: '18', point: 'br' },
+  { position: '87', point: 'bp' },
+  { position: '77', point: 'bp' },
+  { position: '67', point: 'bp' },
+  { position: '57', point: 'bp' },
+  { position: '47', point: 'bp' },
+  { position: '37', point: 'bp' },
+  { position: '27', point: 'bp' },
+  { position: '17', point: 'bp' },
+  { position: '82', point: 'wp' },
+  { position: '72', point: 'wp' },
+  { position: '62', point: 'wp' },
+  { position: '52', point: 'wp' },
+  { position: '42', point: 'wp' },
+  { position: '32', point: 'wp' },
+  { position: '22', point: 'wp' },
+  { position: '12', point: 'wp' },
+  { position: '81', point: 'wr' },
+  { position: '71', point: 'wn' },
+  { position: '61', point: 'wb' },
+  { position: '51', point: 'wk' },
+  { position: '41', point: 'wq' },
+  { position: '31', point: 'wb' },
+  { position: '21', point: 'wn' },
+  { position: '11', point: 'wr' }
+];
 (async () => {
   const browser1 = await puppeteer.launch({headless:false});
 	const browser2 = await puppeteer.launch({ headless: false });
@@ -32,14 +105,17 @@ var count = 0;
   } else {
     console.log('Button not found.');
   }
+
+await new Promise((resolve) => rl.once('line', resolve));
   isAvailable = true;
   setInterval(async () => {
     if(!isAvailable) return;
+    isAvailable = false;
     const boards1 = await iframe1.$('#board');
     const board1 = await boards1.$('div');
     const cells1 = await board1.$$('div');
     const boardId1 = await iframe1.evaluate(board => board.id, board1);
-    const shredderPos = [];
+    let newShPos = [];
     // for (let i = 0; i < 64; i++) {
     //   positionIds.push(boardId1 + "_" + i);
     // }
@@ -59,11 +135,29 @@ var count = 0;
         let position10 = (i + 1) % 8;
         if(position10 == 0) position10 = 8;
         let position = position10 + "" + (Math.floor(i / 8) + 1)
-        shredderPos.push({"position": position, "point": point1});
+        if(point1 != "free") newShPos.push({"position": position, "point": point1});
         // n%8 + (n-1)/8 + 1
       }
     }
-    console.log("shredderPos: ", shredderPos);
+    console.log("shredderPos: ", newShPos);
+    let OSD = [];
+    for (let i = 0; i < oldShPos.length; i++){
+      let flag = false;
+      for (let j = 0; j < newShPos.length; j++){
+        if(oldShPos[i]["position"] == newShPos[j]["position"] && oldShPos[i]["point"] == newShPos[j]["point"]) flag = true;
+      }
+      if (!flag) OSD.push(oldShPos[i]);
+    }
+    let NSD = [];
+    for (let i = 0; i < newShPos.length; i++){
+      let flag = false;
+      for (let j = 0; j < oldShPos.length; j++){
+        if(oldShPos[j]["position"] == newShPos[i]["position"] && oldShPos[j]["point"] == newShPos[i]["point"]) flag = true;
+      }
+      if (!flag) NSD.push(newShPos[i]);
+    }
+    console.log("OSD", OSD);
+    console.log("NSD", NSD);
     const sourceBoundingBox1 = await cells1[8 + count].boundingBox();
     const targetBoundingBox1 = await cells1[24 + count].boundingBox();
     count ++;
@@ -78,7 +172,7 @@ var count = 0;
 
     const boards2 = await page2.$('#board-vs-personalities');
 		const cells2 = await boards2.$$('div');
-    let chessPos = [];
+    let newChPos = [];
 		for (let i = 0; i < cells2.length; i++) {
 			const cell2 = cells2[i];
 			const cellClass2 = await page2.evaluate(cell => cell.className, cell2);
@@ -87,18 +181,39 @@ var count = 0;
 				if (cellClasses2[1].includes('square')) {
 					// console.log("Location: ", cellClasses2[1]);
 					// console.log("point: ", cellClasses2[2]);
-          chessPos.push({"position": cellClasses2[1].replace("square-", ""), "point": cellClasses2[2]})
+          newChPos.push({"position": cellClasses2[1].replace("square-", ""), "point": cellClasses2[2]})
 					if (cellClasses2[1].includes("32")) wpL = i;
 				}
 				if (cellClasses2[2].includes('square')) {
 					// console.log("Location: ", cellClasses2[2]);
 					// console.log("point: ", cellClasses2[1]);
-          chessPos.push({"position": cellClasses2[2].replace("square-", ""), "point": cellClasses2[1]})
+          newChPos.push({"position": cellClasses2[2].replace("square-", ""), "point": cellClasses2[1]})
 					if (cellClasses2[2].includes("32")) wpL = i;
 				}
 			}
 		}
-    // console.log("chessPos: ", chessPos);
+    console.log("newChPos: ", newChPos);
+    
+    let OCD = [];
+    for (let i = 0; i < oldChPos.length; i++){
+      let flag = false;
+      for (let j = 0; j < newChPos.length; j++){
+        if(oldChPos[i]["position"] == newChPos[j]["position"] && oldChPos[i]["point"] == newChPos[j]["point"]) flag = true;
+      }
+      if (!flag) OCD.push(oldChPos[i]);
+    }
+    let NCD = [];
+    for (let i = 0; i < newChPos.length; i++){
+      let flag = false;
+      for (let j = 0; j < oldChPos.length; j++){
+        if(oldChPos[j]["position"] == newChPos[i]["position"] && oldChPos[j]["point"] == newChPos[i]["point"]) flag = true;
+      }
+      if (!flag) NCD.push(newChPos[i]);
+    }
+    console.log("OCD", OCD);
+    console.log("NCD", NCD);
+    oldShPos = newShPos;
+    oldChPos = newChPos;
 		// console.log("-------------------------------------------");
 		// console.log("wpL: ", wpL);
 		const sourceBoundingBox2 = await cells2[wpL].boundingBox();
