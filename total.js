@@ -153,7 +153,8 @@ let oldChPos = [
   }
   console.log("newChPos: ", newChPos);
   
-  let SsL = [];
+  SsL = "";
+  EsL = "";
   for (let i = 0; i < oldShPos.length; i++){
     let flag = false;
     for (let j = 0; j < newShPos.length; j++){
@@ -163,7 +164,6 @@ let oldChPos = [
       SsL=oldShPos[i];
     }
   }
-  let EsL = [];
   for (let i = 0; i < newShPos.length; i++){
     let flag = false;
     for (let j = 0; j < oldShPos.length; j++){
@@ -173,8 +173,8 @@ let oldChPos = [
       EsL=newShPos[i];
     }
   }
-  let ScL = [];
-  let EcL = [];
+  let ScL = "";
+  let EcL = "";
   console.log("SsL: ", SsL);
   console.log("EsL: ", EsL);
   await new Promise((resolve) => rl.once('line', resolve));
@@ -194,6 +194,8 @@ let oldChPos = [
     console.log("s10, s1", s10 + ":" + s1);
     console.log("EsL", EsL["position"]);
     console.log("s10, s1", e10 + ":" + e1);
+    SsL = "";
+    EsL = "";
     const boards2 = await page2.$('#board-vs-personalities');
     const svg = await boards2.$$("svg");
 		const BoundingBox2 = await svg[0].boundingBox();
@@ -212,7 +214,8 @@ let oldChPos = [
     ScL = ""
     ScE = ""
     let newChPos = [];
-    while(!ScL){
+    let ScLflag = true;
+    while(ScLflag){
       newChPos = [];
       await page2.waitForTimeout(100);
       const cells2 = await boards2.$$('div');
@@ -225,13 +228,11 @@ let oldChPos = [
             // console.log("Location: ", cellClasses2[1]);
             // console.log("point: ", cellClasses2[2]);
             newChPos.push({"position": cellClasses2[1].replace("square-", ""), "point": cellClasses2[2]})
-            if (cellClasses2[1].includes("32")) wpL = i;
           }
           if (cellClasses2[2].includes('square')) {
             // console.log("Location: ", cellClasses2[2]);
             // console.log("point: ", cellClasses2[1]);
             newChPos.push({"position": cellClasses2[2].replace("square-", ""), "point": cellClasses2[1]})
-            if (cellClasses2[2].includes("32")) wpL = i;
           }
         }
       }
@@ -242,6 +243,7 @@ let oldChPos = [
         }
         if (!flag && oldChPos[i]["point"][0] == "b") {
           ScL = oldChPos[i];
+          ScLflag = false;
         }
       }
       for (let i = 0; i < newChPos.length; i++){
@@ -272,6 +274,8 @@ let oldChPos = [
     console.log("s10, s1", s10 + ":" + s1);
     console.log("EL", EcL["position"]);
     console.log("s10, s1", e10 + ":" + e1);
+    ScL = ""
+    ScE = ""
     const boards1 = await iframe1.$('#board');
     const board1 = await boards1.$('div');
     const cells1 = await board1.$$('div');
@@ -291,7 +295,8 @@ let oldChPos = [
     SsL = "";
     SsE = "";
     let newShPos = [];
-    while(!SsL){
+    let SsLFlag = true;
+    while(SsLFlag){
       newShPos = [];
       await page1.waitForTimeout(100);
       for (let i = 0; i < 64; i++) {
@@ -319,6 +324,7 @@ let oldChPos = [
         }
         if (!flag && oldShPos[i]["point"][0] == "w") {
           SsL = oldShPos[i];
+          SsLFlag = false;
         }
       }
       for (let i = 0; i < newShPos.length; i++){
