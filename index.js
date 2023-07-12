@@ -26,7 +26,16 @@ var count = 0;
     await page.waitForSelector(`#${iframeId}`);
     const frame = await page.$(`#${iframeId}`);
     const iframe = await frame.contentFrame();
-    
+    // //*[@id="buttons"]/div[4]
+    const blackbutton = await iframe.$x('//*[@id="buttons"]/div[4]');
+    if (blackbutton.length > 0) {
+      await iframe.evaluate((element) => {
+        element.click();
+      }, blackbutton[0]);
+      console.log('Button clicked.');
+    } else {
+      console.log('Button not found.');
+    }
     const boards = await iframe.$('#board');
     const board = await boards.$('div');
     const cells = await board.$$('div');

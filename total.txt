@@ -1,0 +1,124 @@
+const puppeteer = require('puppeteer');
+const axios = require('axios');
+const fs = require('fs');
+
+const interval = 5000;
+var count = 0;
+
+(async () => {
+  const browser1 = await puppeteer.launch({headless:false});
+	const browser2 = await puppeteer.launch({ headless: false });
+  const page1 = await browser1.newPage();
+	const page2 = await browser2.newPage();
+  await page1.goto('https://www.shredderchess.com/online/play-chess-online.html');  
+	await page2.goto('https://www.chess.com/play/computer');
+
+	var wpL = 0;
+	var isAvailable = false;
+  const iframeId1 = 'blockrandom';
+  await page1.waitForFunction(id => {
+    const iframe1 = document.getElementById(id);
+    return iframe1 !== null;
+  }, {}, iframeId1);
+  await page1.waitForSelector(`#${iframeId1}`);
+  const frame1 = await page1.$(`#${iframeId1}`);
+  const iframe1 = await frame1.contentFrame();
+  const blackbutton = await iframe1.$x('//*[@id="buttons"]/div[4]');
+  if (blackbutton.length > 0) {
+    await iframe1.evaluate((element) => {
+      element.click();
+    }, blackbutton[0]);
+    console.log('Button clicked.');
+  } else {
+    console.log('Button not found.');
+  }
+  isAvailable = true;
+  setInterval(async () => {
+    if(!isAvailable) return;
+    const boards1 = await iframe1.$('#board');
+    const board1 = await boards1.$('div');
+    const cells1 = await board1.$$('div');
+    const boardId1 = await iframe1.evaluate(board => board.id, board1);
+    const shredderPos = [];
+    // for (let i = 0; i < 64; i++) {
+    //   positionIds.push(boardId1 + "_" + i);
+    // }
+    for (let i = 0; i < 64; i++) {
+      const cell1 = cells1[i];
+      // const cellId = await iframe.evaluate(cell => cell.id, cell);
+      const cellDiv1 = await cell1.$$('img');
+      if(cellDiv1.length){
+        let imgPath = await iframe1.evaluate(img => img.src, cellDiv1[0]);
+        let imgPathArray = imgPath.split("/");
+        imgPathArray = imgPathArray[imgPathArray.length - 1].split(".");
+        let point1 = imgPathArray[0];
+        point1 = point1.replace("a109", "");
+        imgPath.replace("https://www.shredderchess.com/online/applets/images/a109", "");
+        imgPath.replace(".png", "");
+        // console.log(i, point1);
+        let position10 = (i + 1) % 8;
+        if(position10 == 0) position10 = 8;
+        let position = position10 + "" + (Math.floor(i / 8) + 1)
+        shredderPos.push({"position": position, "point": point1});
+        // n%8 + (n-1)/8 + 1
+      }
+    }
+    console.log("shredderPos: ", shredderPos);
+    const sourceBoundingBox1 = await cells1[8 + count].boundingBox();
+    const targetBoundingBox1 = await cells1[24 + count].boundingBox();
+    count ++;
+    const sourceX1 = sourceBoundingBox1.x + sourceBoundingBox1.width / 2;
+    const sourceY1 = sourceBoundingBox1.y + sourceBoundingBox1.height / 2;
+    const targetX1 = targetBoundingBox1.x + targetBoundingBox1.width / 2;
+    const targetY1 = targetBoundingBox1.y + targetBoundingBox1.height / 2;
+    await page1.mouse.move(sourceX1, sourceY1);
+    await page1.mouse.down();
+    await page1.mouse.move(targetX1, targetY1);
+    await page1.mouse.up();
+
+    const boards2 = await page2.$('#board-vs-personalities');
+		const cells2 = await boards2.$$('div');
+    let chessPos = [];
+		for (let i = 0; i < cells2.length; i++) {
+			const cell2 = cells2[i];
+			const cellClass2 = await page2.evaluate(cell => cell.className, cell2);
+			if (cellClass2.includes('piece')) {
+				let cellClasses2 = cellClass2.split(" ");
+				if (cellClasses2[1].includes('square')) {
+					// console.log("Location: ", cellClasses2[1]);
+					// console.log("point: ", cellClasses2[2]);
+          chessPos.push({"position": cellClasses2[1].replace("square-", ""), "point": cellClasses2[2]})
+					if (cellClasses2[1].includes("32")) wpL = i;
+				}
+				if (cellClasses2[2].includes('square')) {
+					// console.log("Location: ", cellClasses2[2]);
+					// console.log("point: ", cellClasses2[1]);
+          chessPos.push({"position": cellClasses2[2].replace("square-", ""), "point": cellClasses2[1]})
+					if (cellClasses2[2].includes("32")) wpL = i;
+				}
+			}
+		}
+    // console.log("chessPos: ", chessPos);
+		// console.log("-------------------------------------------");
+		// console.log("wpL: ", wpL);
+		const sourceBoundingBox2 = await cells2[wpL].boundingBox();
+		const sourceX2 = sourceBoundingBox2.x + sourceBoundingBox2.width / 2;
+		const sourceY2 = sourceBoundingBox2.y + sourceBoundingBox2.height / 2;
+		const targetX2 = sourceBoundingBox2.x + sourceBoundingBox2.width / 2;
+		const targetY2 = sourceBoundingBox2.y - sourceBoundingBox2.height / 2;
+
+		// console.log("sourceX: ", sourceX2);
+		// console.log("sourceY: ", sourceY2);
+		// console.log("targetX: ", targetX2);
+		// console.log("targetY: ", targetY2);
+		// console.log(" Before await page.mouse.move(sourceX, sourceY)");
+		// if(!isMousePressed) {		
+		await page2.mouse.move(sourceX2, sourceY2);
+		await page2.mouse.down();
+		await page2.mouse.move(targetX2, targetY2);
+		await page2.mouse.up();
+    isAvailable = true;
+  }, interval);
+  
+  // await browser.close();
+})();
