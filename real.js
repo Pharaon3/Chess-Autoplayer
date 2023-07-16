@@ -128,7 +128,7 @@ let oldChPos = [
     }
   }
   console.log("newShPos: ", newShPos);
-  const boards2 = await page2.$('#board-vs-personalities');
+  const boards2 = await page2.$('#board-single');
   const cells2 = await boards2.$$('div');
   let newChPos = [];
   for (let i = 0; i < cells2.length; i++) {
@@ -196,7 +196,7 @@ let oldChPos = [
     console.log("s10, s1", e10 + ":" + e1);
     SsL = "";
     EsL = "";
-    const boards2 = await page2.$('#board-vs-personalities');////*[@id="board"]
+    const boards2 = await page2.$('#board');////*[@id="board"]
     const svg = await boards2.$$("svg");
 		const BoundingBox2 = await svg[0].boundingBox();
 		const sourceX2 = BoundingBox2.x + BoundingBox2.width * (s10 * 2 - 1) / 16;
